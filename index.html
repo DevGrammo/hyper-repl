@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="html & _hyperscript repl | eval with shift + enter">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Abel&display=swap" rel="stylesheet">
+  <title>hyper repl</title>
+  <link rel="stylesheet" href="/css/cm_css_bundle.css" />
+  <style>
+    :root {
+      --resizer-dim: 10px;
+      --header-dim: 7vh;
+      --header-small-dim: 30px;
+      --main-height: calc(100vh - var(--header-dim));
+      --darkBackground: #0f111a;
+      --lightFont: aliceblue;
+      --editorBaseHeight: calc(100vh *0.5 - 90px *0.5);
+      --boxShadowColor: black;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--darkBackground);
+      color: var(--lightFont);
+      font-family: 'Abel', sans-serif;
+    }
+
+    iframe {
+      border: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    header {
+      height: var(--header-dim);
+      display: flex;
+      box-shadow: 0 0.5px var(--boxShadowColor);
+      align-items: center;
+      gap: 15px;
+
+      filter: blur(0.5px);
+      cursor: default;
+      font-size: 2em;
+    }
+
+    header>a {
+      text-decoration: none;
+      font-size: 1.5rem;
+      vertical-align: middle;
+      transition: all 0.3s ease;
+      color: #8ca0f8;
+      filter: brightness(0.8);
+      cursor: pointer;
+    }
+
+    .cheatsheet-button {
+      font-size: 1.5rem;
+      color: #8ca0f8;
+    }
+
+    .cheatsheet-button:hover {
+      color: hsl(229, 89%, 60%) !important
+    }
+
+    .cheatsheet-button:focus {
+      outline: 0;
+      filter: brightness(1.5);
+      background-color: black
+    }
+
+    a:focus {
+      outline: 0;
+      filter: brightness(1.5);
+      background-color: black
+    }
+
+    header>a:hover {
+      color: hsl(229, 89%, 60%);
+    }
+
+    header>div {
+      padding: 0 5px;
+      align-self: center;
+    }
+
+    main {
+      height: var(--main-height);
+      width: 100vw;
+      overflow: hidden;
+      display: grid;
+      transition: opacity ease 0.2s;
+      grid-template-columns: max-content var(--resizer-dim) minmax(auto, 1fr);
+    }
+
+    main.full-screen {
+      height: 100vh;
+    }
+
+    button {
+      background: none;
+      color: inherit;
+      border: none;
+      padding: 0;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:focus {
+      background-color: var(--darkBackground);
+      filter: brightness(1);
+      outline: 1px solid orange;
+    }
+
+    button.close-button:focus {
+      filter: brightness(1);
+      background-color: transparent;
+    }
+
+    button.close-button:hover {
+      filter: brightness(1);
+      outline: 0;
+      background-color: transparent;
+      fill: red;
+    }
+
+    section {
+      height: inherit;
+    }
+
+    section.full-screen {
+      width: 100vw !important;
+      max-width: 100vw !important;
+    }
+
+    div.menu {
+      box-shadow: 0 0.5px var(--boxShadowColor);
+    }
+
+    nav.menu {
+      box-shadow: 0 -0.5px var(--boxShadowColor);
+    }
+
+    section .menu {
+      height: var(--header-small-dim);
+      display: flex;
+      filter: blur(0.5px);
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: #b2aba2;
+      width: 100%;
+    }
+
+    section .menu .item {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      box-sizing: border-box;
+      margin: 1px;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+      color: #a9b9ff;
+
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif
+    }
+
+    .item>svg {
+      fill: white;
+    }
+
+    .item:hover>svg {
+      fill: #a9b9ff;
+    }
+
+    .item:hover {
+      background-color: var(--darkBackground);
+      filter: brightness(1.2);
+    }
+
+    section .menu>.item:hover {
+      background-color: var(--darkBackground);
+      filter: brightness(1.2);
+    }
+
+    .menu .menu-icon {
+      min-width: 30px;
+      padding: 0 !important;
+
+    }
+
+    .resizer {
+      background-color: #a9b9ff;
+      opacity: 0.5;
+      user-select: none;
+      cursor: col-resize;
+    }
+
+    .resizer[data-direction="height"] {
+      cursor: row-resize;
+    }
+
+    .resizer:hover {
+      opacity: 0.9;
+      user-select: none;
+    }
+
+    .editor-component {
+      height: var(--editorBaseHeight);
+    }
+
+    .CodeMirror {
+      filter: blur(0.4px) !important;
+      font-size: 1rem;
+    }
+
+    .CodeMirror-focused{
+    filter: brightness(1) !important
+}
+
+
+    .spinner_LWk7 {
+      animation: spinner_GWy6 1.2s linear infinite, spinner_BNNO 1.2s linear infinite
+    }
+
+    .spinner_yOMU {
+      animation: spinner_GWy6 1.2s linear infinite, spinner_pVqn 1.2s linear infinite;
+      animation-delay: .15s
+    }
+
+    .spinner_KS4S {
+      animation: spinner_GWy6 1.2s linear infinite, spinner_6uKB 1.2s linear infinite;
+      animation-delay: .3s
+    }
+
+    .spinner_zVee {
+      animation: spinner_GWy6 1.2s linear infinite, spinner_Qw4x 1.2s linear infinite;
+      animation-delay: .45s
+    }
+
+    @keyframes spinner_GWy6 {
+
+      0%,
+      50% {
+        width: 9px;
+        height: 9px
+      }
+
+      10% {
+        width: 11px;
+        height: 11px
+      }
+    }
+
+    @keyframes spinner_BNNO {
+
+      0%,
+      50% {
+        x: 1.5px;
+        y: 1.5px
+      }
+
+      10% {
+        x: .5px;
+        y: .5px
+      }
+    }
+
+    @keyframes spinner_pVqn {
+
+      0%,
+      50% {
+        x: 13.5px;
+        y: 1.5px
+      }
+
+      10% {
+        x: 12.5px;
+        y: .5px
+      }
+    }
+
+    @keyframes spinner_6uKB {
+
+      0%,
+      50% {
+        x: 13.5px;
+        y: 13.5px
+      }
+
+      10% {
+        x: 12.5px;
+        y: 12.5px
+      }
+    }
+
+    @keyframes spinner_Qw4x {
+
+      0%,
+      50% {
+        x: 1.5px;
+        y: 13.5px
+      }
+
+      10% {
+        x: .5px;
+        y: 12.5px
+      }
+    }
+  </style>
+</head>
+<script type="text/hyperscript">
+  behavior Expandable
+
+  init
+    get the first <div.editor-component:not([id=`${my @id}`])/> set :other to result
+    get the first <main/>  set :main to result
+    on click from  <*.item[action='collapse']/> in .menu in me 
+      send collapse to me send expand to :other
+    on click from  <*.item[action='expand']/> in .menu in me 
+      send expand to me send collapse to :other
+    on expand 
+      set margin to 70 set my *height to (:main's *computed-height as Int - margin) + "px" end
+    on collapse 
+      set my *height to "30px" end 
+  end
+
+  behavior FullSizable
+  init
+  get the first <section:not([id=`${my @id}`])/> set :other to result
+  get the first <main/> set :main to result
+  on click from the first <*.item[action="fullscreen"]/> in me
+    if my @fullscreen is "off"
+      hide :other
+      hide the first <header/>
+      hide #main-resizer
+      add .full-screen to :main
+      add .full-screen to me
+      set my @fullscreen to "on"
+      get .editor-component set result's *height to "calc((100vh - 40px) * 0.5)"
+    else 
+      show :other 
+      show the first <header/>
+      show #main-resizer
+      remove .full-screen from :main 
+      remove .full-screen from me 
+      set my @fullscreen to "off"
+      get .editor-component set result's *height to "calc(100vh *0.5 - 90px * 0.5)"
+  end
+
+  def EditorComponent.onTemplateEvaluation(cm)
+    send evaluating
+    make a <iframe/> set frame to result 
+    set DOM to parser.parseFromString(cm.getValue(), "text/html")
+    make a <script/> set script to result
+      set script.type to "text/hyperscript"
+      set script.innerText to "on message from window call _hyperscript(event.data)"
+    put script at the end of DOM.body 
+    set frame's @srcdoc to DOM.documentElement.outerHTML
+    set frame's @seamless to true 
+    set frame's @sandbox to "allow-scripts allow-modals allow-same-origin"
+    set frame's @id to "target-frame"
+    set frame's @title to "repl-output"
+    Idiomorph.morph(#target-frame, frame)
+    exit
+  end
+
+  def EditorComponent.onScriptEvaluation(cm)
+    send evaluating
+    get #target-frame
+      js(result, cm) result.contentWindow.postMessage(cm.getValue(), "*") end
+    exit
+  end
+
+  def EditorComponent.getEvaluationMode(mode)
+    if mode is "text/html" return EditorComponent.onTemplateEvaluation
+      else return EditorComponent.onScriptEvaluation
+  end
+
+  behavior EditorComponent
+      init
+      get the first <textarea/> in me 
+      set t to result 
+      call EditorComponent.getEvaluationMode(my @mode) set evalHandler to result
+      call CodeMirror.fromTextArea(t,
+        {   lineNumbers: true,
+            scrollbarStyle: "simple",
+            theme: 'material-ocean',
+            mode: my @mode,
+            autoCloseTags: true,
+            autoCloseBrackets: true,
+            matchTags: { bothTags: true }
+        }) 
+      set mirror to result
+      mirror.setOption("extraKeys", {
+      "Shift-Enter": evalHandler
+      })
+      set me.mirror to mirror
+      set me.eval to evalHandler
+      on eval me.eval(me.mirror)      
+    end
+    
+    def showEvalLoader(elt)
+    send eval to elt
+    send loading to #evaluator-indicator
+    end
+
+    js window.parser = new DOMParser() end
+  
+</script>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="play-btn-svg">
+    <path d="M6.79 5.093A.5.5 0 0 0 6 5.5v5a.5.5 0 0 0 .79.407l3.5-2.5a.5.5 0 0 0 0-.814l-3.5-2.5z" />
+    <path
+      d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z" />
+  </symbol>
+  <symbol id="arrows-fullscreen-svg">
+    <path fill-rule="evenodd"
+      d="M5.828 10.172a.5.5 0 0 0-.707 0l-4.096 4.096V11.5a.5.5 0 0 0-1 0v3.975a.5.5 0 0 0 .5.5H4.5a.5.5 0 0 0 0-1H1.732l4.096-4.096a.5.5 0 0 0 0-.707zm4.344 0a.5.5 0 0 1 .707 0l4.096 4.096V11.5a.5.5 0 1 1 1 0v3.975a.5.5 0 0 1-.5.5H11.5a.5.5 0 0 1 0-1h2.768l-4.096-4.096a.5.5 0 0 1 0-.707zm0-4.344a.5.5 0 0 0 .707 0l4.096-4.096V4.5a.5.5 0 1 0 1 0V.525a.5.5 0 0 0-.5-.5H11.5a.5.5 0 0 0 0 1h2.768l-4.096 4.096a.5.5 0 0 0 0 .707zm-4.344 0a.5.5 0 0 1-.707 0L1.025 1.732V4.5a.5.5 0 0 1-1 0V.525a.5.5 0 0 1 .5-.5H4.5a.5.5 0 0 1 0 1H1.732l4.096 4.096a.5.5 0 0 1 0 .707z" />
+  </symbol>
+  <symbol id="arrows-expand-svg">
+    <path fill-rule="evenodd"
+      d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8ZM7.646.146a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 1.707V5.5a.5.5 0 0 1-1 0V1.707L6.354 2.854a.5.5 0 1 1-.708-.708l2-2ZM8 10a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 0 1 .708-.708L7.5 14.293V10.5A.5.5 0 0 1 8 10Z" />
+  </symbol>
+  <symbol id="arrows-collapse-svg">
+    <path fill-rule="evenodd"
+      d="M1 8a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 0 1h-13A.5.5 0 0 1 1 8Zm7-8a.5.5 0 0 1 .5.5v3.793l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 4.293V.5A.5.5 0 0 1 8 0Zm-.5 11.707-1.146 1.147a.5.5 0 0 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 11.707V15.5a.5.5 0 0 1-1 0v-3.793Z" />
+  </symbol>
+</svg>
+
+<body>
+  <svg id="evaluator-indicator" width="36" height="36" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="
+  position: absolute;
+  height: 50px;
+  width: 50px;
+  bottom:10px;
+  right: 10px;
+  opacity: 0;
+  display:hidden"
+    _="on evaluating from body show me set my *opacity to 1 transition opacity to 0 over 0.3s then hide me">
+    <rect class="spinner_LWk7" fill="yellow" x="1.5" y="1.5" rx="1" width="9" height="9" />
+    <rect class="spinner_yOMU" fill="blue" x="13.5" y="1.5" rx="1" width="9" height="9" />
+    <rect class="spinner_KS4S" fill="red" x="13.5" y="13.5" rx="1" width="9" height="9" />
+    <rect class="spinner_zVee" fill="green" x="1.5" y="13.5" rx="1" width="9" height="9" />
+  </svg>
+  <header>
+    <div style="margin-left: 25px; font-size: 1.5rem;">_hyperscript repl</div>
+    <a href="https://hyperscript.org" target="_blank">///_hyperscript</a>
+    <button class="cheatsheet-button" _="on click get #cheatsheet result.showModal()
+          on close from #cheatsheet get #cheatsheet result.close()">cheatsheet</button>
+    <a href="" style="margin-left: auto; padding-right: 15px">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="white" class="bi bi-github"
+        viewBox="0 0 16 16">
+        <path
+          d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
+      </svg>
+    </a>
+  </header>
+  <dialog id="cheatsheet">
+    <div>
+      <div style="width: 100%; text-align: end;">
+        <button class="close-button" style="height: 20px; width: 20px;" _="on click send close to #cheatsheet">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="inherit" class="bi bi-x-square-fill"
+            viewBox="0 0 16 16">
+            <path
+              d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm3.354 4.646L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 1 1 .708-.708z" />
+          </svg>
+        </button>
+      </div>
+      <object _="on keydown send close to #cheatsheet" data="https://hyperscript.org/img/hyperscript-cheatsheet.pdf"
+        type="application/pdf" style="width:70vw;height:75vh"></object>
+    </div>
+  </dialog>
+  <main>
+    <section id="code-section" _="install FullSizable" fullscreen="off" style="width: 450px;">
+      <div class="menu" style="overflow: hidden;">
+        <button aria-label="fullscreen" class="item menu-icon" action="fullscreen">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-arrows-fullscreen"
+            viewBox="0 0 16 16">
+            <use xlink:href='#arrows-fullscreen-svg' />
+          </svg>
+        </button>
+      </div>
+      <div id="editors" _="init
+      log `Editors started.`
+      transition #editors opacity to 1 over 0.3s      
+     end" style="opacity: 0;
+        height: inherit;
+        width: inherit;
+        max-width: inherit;
+        overflow: hidden;
+        transition: opacity ease 0.3s;">
+        <div class="editor-component" mode="text/html" id="template-editor" _="
+        install EditorComponent
+        install Expandable
+        init send eval to me        
+        ">
+          <nav class="menu">
+            <button aria-label="eval" class="item menu-icon" title="shift + enter to eval"
+              _="on click send eval to the closest .editor-component">
+              <svg width="20" height="20" fill="inherit" class="bi bi-play-btn" viewBox="0 0 16 16" stroke="white"
+                stroke-width="0px" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <use xlink:href="#play-btn-svg" />
+              </svg>
+            </button>
+            <div class="item">html-repl</div>
+            <div style="margin-left:auto; display:flex">
+              <button aria-label="collapse" action="collapse" class="item menu-icon">
+                <svg width="20" height="20" fill="inherit" class="bi bi-play-btn" viewBox="0 0 16 16" stroke="white"
+                  stroke-width="0px" xmlns:xlink="http://www.w3.org/1999/xlink">
+                  <use xlink:href="#arrows-collapse-svg" />
+                </svg>
+              </button>
+              <button aria-label="expand" action=expand class="item menu-icon">
+                <svg width="20" height="20" fill="inherit" class="bi bi-play-btn" viewBox="0 0 16 16" stroke="white"
+                  stroke-width="0px" xmlns:xlink="http://www.w3.org/1999/xlink">
+                  <use xlink:href="#arrows-expand-svg" />
+                </svg>
+              </button>
+            </div>
+          </nav>
+          <textarea aria-labelledby="html-repl">
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h1>hyper frame</h1>
+  <p>Evaluate your code with <code> shift + enter</code> or click on the <code>play</code> button</p>
+  <div hx-get="/resources/htmx_api.html" hx-trigger="load">
+    <p>and what about <code>htmx</code></p>
+   </div>
+  <script src="https://unpkg.com/hyperscript.org@0.9.8"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.0" integrity="sha384-aOxz9UdWG0yBiyrTwPeMibmaoq07/d3a96GCbb9x60f3mOt5zwkjdbcHFnKH8qls" crossorigin="anonymous"></script>
+</body>
+</html>
+</textarea>
+        </div>
+        <!-- 
+          thanks https://hyperscript.org/playground/
+          see "Drag" example: "this little maneuver is called The Akşimşek Gambit..."
+         -->
+        <div id="editors-resizer" class="resizer" data-direction="height" style="height: 10px;" _="
+        on pointerdown(clientY) 
+        halt the event 
+        get the #editors measure its height set MaxHeight to result.height as Int - 40
+        get the #template-editor measure its height set initialHeight to result.height as Int
+        set y to clientY
+        repeat until event pointerup from document
+          wait for pointermove(clientY) or pointerup(clientY) from document
+          set dy to clientY - y
+          set computed to Math.max(Math.min(initialHeight + dy, MaxHeight - 30), 30)
+          set #template-editor's *height to Math.max(Math.min(initialHeight + dy, MaxHeight - 30), 30) + 'px'
+          set #script-editor's *height to (MaxHeight - #template-editor's *computed-height as Int) + 'px'">
+        </div>
+
+        <div id="script-editor" class="editor-component" mode="hyperscript" _="
+        install EditorComponent
+        install Expandable">
+          <nav class="menu">
+            <button aria-label="eval" class="item menu-icon" title="shift + enter to eval"
+              _="on click send eval to the closest .editor-component">
+              <svg width="20" height="20" fill="inherit" class="bi bi-play-btn" viewBox="0 0 16 16" stroke="white"
+                stroke-width="0px" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <use xlink:href="#play-btn-svg" />
+              </svg>
+            </button>
+            <div class="item">hyper-repl</div>
+            <div style="margin-left:auto; display:flex">
+              <button aria-label="collapse" action="collapse" class="item menu-icon">
+                <svg width="20" height="20" fill="inherit" class="bi bi-play-btn" viewBox="0 0 16 16" stroke="white"
+                  stroke-width="0px" xmlns:xlink="http://www.w3.org/1999/xlink">
+                  <use xlink:href="#arrows-collapse-svg" />
+                </svg>
+              </button>
+              <button aria-label="expand" action=expand class="item menu-icon">
+                <svg width="20" height="20" fill="inherit" class="bi bi-play-btn" viewBox="0 0 16 16" stroke="white"
+                  stroke-width="0px" xmlns:xlink="http://www.w3.org/1999/xlink">
+                  <use xlink:href="#arrows-expand-svg" />
+                </svg>
+              </button>
+            </div>
+          </nav>
+          <textarea aria-labelledby="hyper-repl">init alert("I am an annoyng alert")</textarea>
+        </div>
+      </div>
+    </section>
+    <div id="main-resizer" class="resizer" style="width: 10px; box-sizing: border-box; margin-top:-1px" _="
+    on pointerdown(clientX) 
+      halt the event 
+      tell #target-frame set your *display to 'none'
+      tell #while-resizing set your *display to 'block'
+      set MaxWidth to window.innerWidth - 10
+      get the #code-section measure its width set initialWidth to result.width as Int
+      set x to clientX
+      repeat until event pointerup from document
+        wait for pointermove(clientX) or pointerup(clientX) from document
+        set dx to clientX - x
+        set computed to Math.max(Math.min(initialWidth + dx, MaxWidth), 0)
+        set #code-section's *width to computed + 'px' end
+    on pointerup 
+      tell #target-frame set your *display to 'initial'
+      tell #while-resizing set your *display to 'none'">
+    </div>
+
+    <section id="render-section" _="install FullSizable" fullscreen="off" style="width: 100%;">
+      <div class="menu">
+        <button aria-label="fullscreen" class="item menu-icon" action="fullscreen">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-arrows-fullscreen"
+            viewBox="0 0 16 16">
+            <use xlink:href="#arrows-fullscreen-svg" />
+          </svg>
+        </button>
+      </div>
+      <div style="width: calc(100% - 20px); height: calc(100% - 50px); background-color: white; margin: 10px;">
+        <iframe id="target-frame" title="repl-output" src="" frameborder="0"
+          sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+        <div id="while-resizing" style="display: none; 
+          opacity: 0.5; 
+          width: 100%; 
+          height: 100%; 
+          filter: brightness(0.6);
+          background-color: #fb9797;">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/idiomorph"></script>
+  <script src="https://unpkg.com/hyperscript.org@0.9.8"></script>
+  <script src="resources/cmbundle.js" crossorigin="anonymous"></script>
+
+</body>
+
+</html>
